@@ -46,10 +46,23 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text('Demo'),
+            RaisedButton(
+              onPressed: _sendBinaryMessageToNativePlatform,
+              child: Text('Send Message'),
+            )
           ],
         ),
       ),
     );
+  }
+
+  void _sendBinaryMessageToNativePlatform() async {
+    final WriteBuffer writeBuffer = WriteBuffer();
+    writeBuffer.putFloat64(3.1415);
+    writeBuffer.putInt32(12345678);
+    final ByteData message = writeBuffer.done();
+    await BinaryMessages.send('flutter_to_native_binary_message', message);
+    print('Message sent!');
   }
 
   void _startReceivingBinaryMessages() {
@@ -58,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final ReadBuffer readBuffer = ReadBuffer(message);
       final double x = readBuffer.getFloat64();
       final int y = readBuffer.getInt32();
-      print('Received $x & $y');
+      print('Received $x and $y');
       return null;
     });
   }

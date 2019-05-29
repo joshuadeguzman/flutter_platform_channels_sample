@@ -7,6 +7,7 @@ import android.util.Log
 import io.flutter.app.FlutterActivity
 import io.flutter.plugins.GeneratedPluginRegistrant
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class MainActivity : FlutterActivity() {
     private var TAG = MainActivity::class.java.simpleName
@@ -15,8 +16,21 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
         GeneratedPluginRegistrant.registerWith(this)
 
+        // Start receiving messages from flutter
+        this.startReceivingMessagesFromFlutter()
+
         // Send message to flutter
         this.sendMessageToFlutter()
+    }
+
+    private fun startReceivingMessagesFromFlutter() {
+        flutterView.setMessageHandler("flutter_to_native_binary_message" ) { message, reply ->
+            message.order(ByteOrder.nativeOrder())
+            val x = message.double
+            val y = message.int
+            Log.d(TAG, "Received $x and $y")
+            reply.reply(null)
+        }
     }
 
     private fun sendMessageToFlutter() {
