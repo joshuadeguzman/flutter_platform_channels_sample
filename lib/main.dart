@@ -27,6 +27,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const TAG = "FlutterDemoApp";
+  static const channel = BasicMessageChannel<String>(
+    'flutter_to_native_basic_message',
+    StringCodec(),
+  );
+
   @override
   void initState() {
     // Receive binary messages from native platforms
@@ -49,7 +55,12 @@ class _MyHomePageState extends State<MyHomePage> {
             RaisedButton(
               onPressed: _sendBinaryMessageToNativePlatform,
               child: Text('Send Message'),
-            )
+            ),
+            RaisedButton(
+              onPressed: () =>
+                  _sendMessageToNativePlatformWithData("Flutter is <3"),
+              child: Text('Send Message with Data'),
+            ),
           ],
         ),
       ),
@@ -62,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
     writeBuffer.putInt32(12345678);
     final ByteData message = writeBuffer.done();
     await BinaryMessages.send('flutter_to_native_binary_message', message);
-    print('Message sent!');
+    print('$TAG: Message sent!');
   }
 
   void _startReceivingBinaryMessages() {
@@ -71,8 +82,14 @@ class _MyHomePageState extends State<MyHomePage> {
       final ReadBuffer readBuffer = ReadBuffer(message);
       final double x = readBuffer.getFloat64();
       final int y = readBuffer.getInt32();
-      print('Received $x and $y');
+      print('$TAG: Received $x and $y');
       return null;
     });
+  }
+
+  void _sendMessageToNativePlatformWithData(String message) async {
+    // Send messages to the platform
+    final String reply = await channel.send(message);
+    print("$TAG: $reply");
   }
 }
