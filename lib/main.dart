@@ -29,14 +29,16 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   static const TAG = "FlutterDemoApp";
   static const channel = BasicMessageChannel<String>(
-    'flutter_to_native_basic_message',
+    'basic_message_channel',
     StringCodec(),
   );
+
+  static const codec = StringCodec();
 
   @override
   void initState() {
     // Receive binary messages from native platforms
-    _startReceivingBinaryMessages();
+    _startReceivingMessagesFromNativePlatform();
 
     super.initState();
   }
@@ -54,16 +56,58 @@ class _MyHomePageState extends State<MyHomePage> {
             Text('Demo'),
             RaisedButton(
               onPressed: _sendBinaryMessageToNativePlatform,
-              child: Text('Send Message'),
+              child: Text('Send Binary Message'),
             ),
             RaisedButton(
               onPressed: () =>
                   _sendMessageToNativePlatformWithData("Flutter is <3"),
               child: Text('Send Message with Data'),
             ),
+            RaisedButton(
+              onPressed: () => _sendMessageToNativePlatformWithStringCodec(
+                  "Flutter is <3 <3"),
+              child: Text('Send Message with BinaryMessages + String Codec'),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  void _startReceivingMessagesFromNativePlatform() {
+    BinaryMessages.setMessageHandler(
+      'native_to_flutter_binary_message',
+      (ByteData message) async {
+        final ReadBuffer readBuffer = ReadBuffer(message);
+        final double x = readBuffer.getFloat64();
+        final int y = readBuffer.getInt32();
+        print('$TAG: Received $x and $y');
+        return null;
+      },
+    );
+
+    BinaryMessages.setMessageHandler(
+      'flutter_to_native_binary_message',
+      (ByteData message) async {
+        print('$TAG: Received $message');
+        return null;
+      },
+    );
+
+    BinaryMessages.setMessageHandler(
+      'basic_message_channel',
+          (ByteData message) async {
+        print('$TAG: Received $message');
+        return null;
+      },
+    );
+
+    BinaryMessages.setMessageHandler(
+      'binary_messages_string_codec_channel',
+          (ByteData message) async {
+        print('$TAG: Received $message');
+        return null;
+      },
     );
   }
 
@@ -76,20 +120,20 @@ class _MyHomePageState extends State<MyHomePage> {
     print('$TAG: Message sent!');
   }
 
-  void _startReceivingBinaryMessages() {
-    BinaryMessages.setMessageHandler('native_to_flutter_binary_message',
-        (ByteData message) async {
-      final ReadBuffer readBuffer = ReadBuffer(message);
-      final double x = readBuffer.getFloat64();
-      final int y = readBuffer.getInt32();
-      print('$TAG: Received $x and $y');
-      return null;
-    });
-  }
-
   void _sendMessageToNativePlatformWithData(String message) async {
     // Send messages to the platform
     final String reply = await channel.send(message);
     print("$TAG: $reply");
+  }
+
+  void _sendMessageToNativePlatformWithStringCodec(String message) async {
+    // Send messages to the platform
+    final String reply = codec.decodeMessage(
+      await BinaryMessages.send(
+        'binary_messages_string_codec_channel',
+        codec.encodeMessage(message),
+      ),
+    );
+    print(reply);
   }
 }

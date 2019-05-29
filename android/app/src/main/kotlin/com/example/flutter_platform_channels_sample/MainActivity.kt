@@ -24,6 +24,9 @@ class MainActivity : FlutterActivity() {
         // Start receiving messages from flutter
         this.startReceivingMessagesFromFlutterWithData()
 
+        // Start receiving messages from flutter with BinaryMessages + StringCodec
+        this.startReceivingMessagesFromFlutterWithStringCodec()
+
         // Send message to flutter
         this.sendMessageToFlutter()
     }
@@ -38,18 +41,6 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun startReceivingMessagesFromFlutterWithData() {
-        val channel = BasicMessageChannel<String>(flutterView, "flutter_to_native_basic_message", StringCodec.INSTANCE)
-
-        channel.setMessageHandler { message, reply ->
-            // Print received messages from flutter
-            Log.d(TAG, "Received message $message")
-
-            // Reply to messages to flutter
-            reply.reply("This is an auto reply from Kotlin!")
-        }
-    }
-
     private fun sendMessageToFlutter() {
         val message = ByteBuffer.allocateDirect(12)
         message.putDouble(3.1415)
@@ -60,5 +51,29 @@ class MainActivity : FlutterActivity() {
                 Log.d(TAG, "Message sent!")
             }
         }, 2000)
+    }
+
+    private fun startReceivingMessagesFromFlutterWithData() {
+        val channel = BasicMessageChannel<String>(flutterView, "basic_message_channel", StringCodec.INSTANCE)
+
+        channel.setMessageHandler { message, reply ->
+            // Print received messages from flutter
+            Log.d(TAG, "Received message $message")
+
+            // Reply to messages to flutter
+            reply.reply("This is an auto reply from Kotlin! I received $message.")
+        }
+    }
+
+    private fun startReceivingMessagesFromFlutterWithStringCodec() {
+        val channel = BasicMessageChannel<String>(flutterView, "binary_messages_string_codec_channel", StringCodec.INSTANCE)
+
+        channel.setMessageHandler { message, reply ->
+            // Print received messages from flutter
+            Log.d(TAG, "Received message $message")
+
+            // Reply to messages to flutter
+            reply.reply("This is an auto reply from Kotlin! I received $message.")
+        }
     }
 }
